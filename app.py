@@ -84,10 +84,10 @@ class Show(db.Model):
     venue = db.relationship('Parent', back_populates='venues')
     artist = db.relationship('Artist', back_populates='artists')
 
-
-# Create the table - if the table already exists, this will not do anything
-with app.app_context():
-    db.create_all()
+#----------------------------------------------------------------------------#
+# Perform flask db init, followed by flask db migrate, flask db upgrade in 
+# the terminal
+#----------------------------------------------------------------------------#
 
 #----------------------------------------------------------------------------#
 # Filters.
