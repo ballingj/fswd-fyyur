@@ -9,7 +9,6 @@ import logging
 from logging import Formatter, FileHandler
 from flask_wtf import FlaskForm
 from forms import *
-import json
 import dateutil.parser
 import babel
 import collections
@@ -28,74 +27,11 @@ moment = Moment(app)
 app.config.from_object('config')
 db = SQLAlchemy(app)
 
+# import models
+from models import *
+
 # connect to a local postgresql database
 migrate = Migrate(app, db)
-
-#----------------------------------------------------------------------------#
-# Models (See ER_diagram in the root directory of the project)
-#----------------------------------------------------------------------------#
-
-# Venue will be the Parent model
-class Venue(db.Model):
-    __tablename__ = 'venue'
-
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String)
-    city = db.Column(db.String(120))
-    state = db.Column(db.String(120))
-    address = db.Column(db.String(120))
-    phone = db.Column(db.String(120))
-    genres = db.Column(db.ARRAY(db.String))
-    facebook_link = db.Column(db.String(120))
-    image_link = db.Column(db.String(500))
-    website_link = db.Column(db.String(500))
-    seeking_talent = db.Column(db.Boolean)
-    seeking_description = db.Column(db.String(500))
-    # relations
-    artists = db.relationship('Show', back_populates='venue')
-
-    def __repr__(self):
-        return f'<Venue {self.id!r}: {self.name!r}>'
-
-# Artist will be the Child model
-class Artist(db.Model):
-    __tablename__ = 'artist'
-
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String)
-    city = db.Column(db.String(120))
-    state = db.Column(db.String(120))
-    phone = db.Column(db.String(120))
-    genres = db.Column(db.ARRAY(db.String))
-    image_link = db.Column(db.String(500))
-    facebook_link = db.Column(db.String(120))
-    website_link = db.Column(db.String(500))
-    seeking_venue = db.Column(db.Boolean)
-    seeking_description = db.Column(db.String(500))
-    # relations
-    venues = db.relationship('Show', back_populates='artist')
-
-    def __repr__(self):
-        return f'<Artist {self.id!r}: {self.name!r}>'
-
-
-# Show is the Association model
-class Show(db.Model):
-    __tablename__ = 'show'
-    venue_id = db.Column(db.ForeignKey('venue.id'), primary_key=True)  # left - parent
-    artist_id = db.Column(db.ForeignKey('artist.id'), primary_key=True)  # right - child
-    start_time = db.Column(db.DateTime(), primary_key=True)
-    venue = db.relationship('Venue', back_populates='artists')
-    artist = db.relationship('Artist', back_populates='venues')
-
-    def __repr__(self):
-        return f'<Venue {self.venue.name!r} Artist {self.artist.name!r} Date {self.start_time!r}>'
-
-
-#----------------------------------------------------------------------------#
-# Perform flask db init, followed by flask db migrate, flask db upgrade in 
-# the terminal
-#----------------------------------------------------------------------------#
 
 #----------------------------------------------------------------------------#
 # Filters.
@@ -150,7 +86,7 @@ def venues():
 
 @app.route('/venues/search', methods=['POST'])
 def search_venues():
-    # TODO: implement search on artists with partial string search. Ensure it is case-insensitive.
+    # Done: implement search on artists with partial string search. Ensure it is case-insensitive.
     # seach for Hop should return "The Musical Hop".
     # search for "Music" should return "The Musical Hop" and "Park Square Live Music & Coffee"
     search_term = request.form.get('search_term', '')
@@ -160,11 +96,6 @@ def search_venues():
     data = []
     if venues:
         for venue in venues:
-            # num_upcoming_shows = 0
-            # shows = db.session.query(Show).filter(Show.venue_id == venue.id)
-            # for show in shows:
-            #     if (show.start_time > datetime.now()):
-            #         num_upcoming_shows += 1
             data.append({
                 'id': venue.id,
                 'name': venue.name
@@ -419,39 +350,7 @@ def search_artists():
 def show_artist(artist_id):
     # shows the artist page with the given artist_id
     # Done: replace with real artist data from the artist table, using artist_id
-    
-    fake_data3 = {
-        "id": 6,
-        "name": "The Wild Sax Band",
-        "genres": ["Jazz", "Classical"],
-        "city": "San Francisco",
-        "state": "CA",
-        "phone": "432-325-5432",
-        "seeking_venue": False,
-        "image_link": "https://images.unsplash.com/photo-1558369981-f9ca78462e61?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=794&q=80",
-        "past_shows": [],
-        "upcoming_shows": [{
-            "venue_id": 3,
-            "venue_name": "Park Square Live Music & Coffee",
-            "venue_image_link": "https://images.unsplash.com/photo-1485686531765-ba63b07845a7?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=747&q=80",
-            "start_time": "2035-04-01T20:00:00.000Z"
-        }, {
-            "venue_id": 3,
-            "venue_name": "Park Square Live Music & Coffee",
-            "venue_image_link": "https://images.unsplash.com/photo-1485686531765-ba63b07845a7?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=747&q=80",
-            "start_time": "2035-04-08T20:00:00.000Z"
-        }, {
-            "venue_id": 3,
-            "venue_name": "Park Square Live Music & Coffee",
-            "venue_image_link": "https://images.unsplash.com/photo-1485686531765-ba63b07845a7?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=747&q=80",
-            "start_time": "2035-04-15T20:00:00.000Z"
-        }],
-        "past_shows_count": 0,
-        "upcoming_shows_count": 3,
-    }
-#   data = list(filter(lambda d: d['id'] == artist_id, [data1, data2, data3]))[0]
-#   return render_template('pages/show_artist.html', artist=data)
-    
+        
     artist = Artist.query.filter_by(id=artist_id).first_or_404()
     past_shows = db.session.query(Venue, Show).join(Show).join(Artist).\
         filter(
@@ -617,44 +516,7 @@ def create_artist_submission():
 @app.route('/shows')
 def shows():
     # displays list of shows at /shows
-    # TODO: replace with real venues data.
-    fake_data = [{
-        "venue_id": 1,
-        "venue_name": "The Musical Hop",
-        "artist_id": 4,
-        "artist_name": "Guns N Petals",
-        "artist_image_link": "https://images.unsplash.com/photo-1549213783-8284d0336c4f?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=300&q=80",
-        "start_time": "2019-05-21T21:30:00.000Z"
-    }, {
-        "venue_id": 3,
-        "venue_name": "Park Square Live Music & Coffee",
-        "artist_id": 5,
-        "artist_name": "Matt Quevedo",
-        "artist_image_link": "https://images.unsplash.com/photo-1495223153807-b916f75de8c5?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=334&q=80",
-        "start_time": "2019-06-15T23:00:00.000Z"
-    }, {
-        "venue_id": 3,
-        "venue_name": "Park Square Live Music & Coffee",
-        "artist_id": 6,
-        "artist_name": "The Wild Sax Band",
-        "artist_image_link": "https://images.unsplash.com/photo-1558369981-f9ca78462e61?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=794&q=80",
-        "start_time": "2035-04-01T20:00:00.000Z"
-    }, {
-        "venue_id": 3,
-        "venue_name": "Park Square Live Music & Coffee",
-        "artist_id": 6,
-        "artist_name": "The Wild Sax Band",
-        "artist_image_link": "https://images.unsplash.com/photo-1558369981-f9ca78462e61?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=794&q=80",
-        "start_time": "2035-04-08T20:00:00.000Z"
-    }, {
-        "venue_id": 3,
-        "venue_name": "Park Square Live Music & Coffee",
-        "artist_id": 6,
-        "artist_name": "The Wild Sax Band",
-        "artist_image_link": "https://images.unsplash.com/photo-1558369981-f9ca78462e61?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=794&q=80",
-        "start_time": "2035-04-15T20:00:00.000Z"
-    }]
-
+    # Done: replace with real venues data.
     shows = Show.query.all()
 
     data = []
